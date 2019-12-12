@@ -1,6 +1,6 @@
 GIT
   remote: https://github.com/hanazuki/rake-portile.git
-  revision: e5e0e3b8ee740d1cae28129a3d7e0e4cc089a697
+  revision: f5cba80a768bd7c7b414f7e8d96694012864aa23
   specs:
     rake-portile (0.0.0)
       mini_portile2
