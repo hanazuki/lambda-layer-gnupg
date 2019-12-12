@@ -23,7 +23,7 @@ PACKAGES = {
         },
         url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2",
       }
-      r.configure_options = %W[--disable-nls --disable-gpgsm --disable-gpgtar --disable-wks-tools --disable-photo-viewers --disable-card-support --disable-doc LDFLAGS=#{LDFLAGS}]
+      r.configure_options = %W[--disable-nls --disable-gpgsm --disable-gpgtar --disable-wks-tools --disable-photo-viewers --disable-card-support --disable-doc --enable-rpath]
     }
   },
   libgpg_error: {
@@ -37,7 +37,7 @@ PACKAGES = {
         },
         url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2",
       }
-      r.configure_options = %W[--disable-nls --enable-shared --disable-static --with-pic --disable-doc LDFLAGS=#{LDFLAGS}]
+      r.configure_options = %W[--disable-nls --enable-shared --disable-static --with-pic --disable-doc]
     }
   },
   libgcrypt: {
@@ -51,7 +51,7 @@ PACKAGES = {
         },
         url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2",
       }
-      r.configure_options = %W[--enable-shared --disable-static --with-pic --disable-doc LDFLAGS=#{LDFLAGS}]
+      r.configure_options = %W[--enable-shared --disable-static --with-pic --disable-doc]
     }
   },
   libksba: {
@@ -65,7 +65,7 @@ PACKAGES = {
         },
         url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2",
       }
-      r.configure_options = %W[--enable-shared --disable-static --with-pic --disable-doc LDFLAGS=#{LDFLAGS}]
+      r.configure_options = %W[--enable-shared --disable-static --with-pic --disable-doc]
     }
   },
   libassuan: {
@@ -79,7 +79,7 @@ PACKAGES = {
         },
         url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2",
       }
-      r.configure_options = %W[--enable-shared --disable-static --with-pic --disable-doc LDFLAGS=#{LDFLAGS}]
+      r.configure_options = %W[--enable-shared --disable-static --with-pic --disable-doc]
     }
   },
   ntbtls: {
@@ -93,7 +93,7 @@ PACKAGES = {
         },
         url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2",
       }
-      r.configure_options = %W[--enable-shared --disable-static --with-pic --disable-doc LDFLAGS=#{LDFLAGS}]
+      r.configure_options = %W[--enable-shared --disable-static --with-pic --disable-doc]
     }
   },
   npth: {
@@ -107,13 +107,14 @@ PACKAGES = {
         },
         url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2",
       }
-      r.configure_options = %W[--enable-shared --disable-static --with-pic --disable-doc LDFLAGS=#{LDFLAGS}]
+      r.configure_options = %W[--enable-shared --disable-static --with-pic --disable-doc]
     }
   },
 }
 
 PACKAGES.each do |_, package|
   recipe = package[:recipe]
+  recipe.target = '/opt'
   def recipe.install
     return if installed?
     execute('install', %Q(#{make_cmd} install-strip),)
@@ -122,6 +123,19 @@ end
 
 def recipe(id)
   PACKAGES[id][:recipe]
+end
+
+desc "Fetch source codes"
+task :fetch => PACKAGES.keys.map {|id| :"fetch:#{id}" }
+
+namespace :fetch do
+  PACKAGES.each do |id, package|
+    desc "Fetch source code of #{package[:name]}"
+    task id do
+      recipe = package[:recipe]
+      recipe.download unless recipe.downloaded?
+    end
+  end
 end
 
 namespace :build do
@@ -140,7 +154,7 @@ task :package => :build do
   archive = (Pathname(__dir__) + 'pkg').tap(&:mkpath) + 'layer.zip'
   rm_f archive
 
-  ports_dir = Pathname(__dir__) + 'ports'
+  ports_dir = Pathname(__dir__) + '/opt'
 
   exclude = %w[include/** share/aclocal/** share/common-lisp/** share/info/** lib/pkgconfig/** lib/*.la]
 
