@@ -2,146 +2,158 @@ require 'bundler/setup'
 require 'mini_portile2'
 require 'pathname'
 
+ENV['MAKEFLAGS'] ||= "-j#{`nproc`}"
+
+TARGET = Pathname(ENV.fetch('TARGET', '/opt')).realpath
 PUBKEY = (Pathname(__dir__) + 'gnupg.asc').read
 
 task :default => :package
 
-desc 'Build everything'
-task :build => :'build:gnupg'
+task :init
 
-LDFLAGS = %[-Wl,-rpath='$$ORIGIN'/../lib]
+$packages = {}
+def def_package(name, version, depends: [], &block)
+  name = name.to_s
+  id = name.to_sym
+  depends = depends.map(&:to_sym)
 
-PACKAGES = {
-  gnupg: {
-    name: 'GnuPG',
-    depends: %i[libksba libassuan libgcrypt ntbtls npth],
-    recipe: MiniPortile.new('gnupg', '2.2.18').tap {|r|
-      r.files << {
-        gpg:{
-          key: PUBKEY,
-          signature_url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2.sig",
-        },
-        url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2",
-      }
-      r.configure_options = %W[--disable-nls --disable-gpgsm --disable-gpgtar --disable-wks-tools --disable-photo-viewers --disable-card-support --disable-doc --enable-rpath]
-    }
-  },
-  libgpg_error: {
-    name: 'Libgpg-error',
-    depends: %i[],
-    recipe: MiniPortile.new('libgpg-error', '1.36').tap {|r|
-      r.files << {
-        gpg:{
-          key: PUBKEY,
-          signature_url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2.sig",
-        },
-        url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2",
-      }
-      r.configure_options = %W[--disable-nls --enable-shared --disable-static --with-pic --disable-doc]
-    }
-  },
-  libgcrypt: {
-    name: 'Libgcrypt',
-    depends: %i[libgpg_error],
-    recipe: MiniPortile.new('libgcrypt', '1.8.5').tap {|r|
-      r.files << {
-        gpg:{
-          key: PUBKEY,
-          signature_url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2.sig",
-        },
-        url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2",
-      }
-      r.configure_options = %W[--enable-shared --disable-static --with-pic --disable-doc]
-    }
-  },
-  libksba: {
-    name: 'Libksba',
-    depends: %i[libgpg_error],
-    recipe: MiniPortile.new('libksba', '1.3.5').tap {|r|
-      r.files << {
-        gpg:{
-          key: PUBKEY,
-          signature_url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2.sig",
-        },
-        url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2",
-      }
-      r.configure_options = %W[--enable-shared --disable-static --with-pic --disable-doc]
-    }
-  },
-  libassuan: {
-    name: 'Libassuan',
-    depends: %i[libgpg_error],
-    recipe: MiniPortile.new('libassuan', '2.5.3').tap {|r|
-      r.files << {
-        gpg:{
-          key: PUBKEY,
-          signature_url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2.sig",
-        },
-        url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2",
-      }
-      r.configure_options = %W[--enable-shared --disable-static --with-pic --disable-doc]
-    }
-  },
-  ntbtls: {
-    name: 'ntbTLS',
-    depends: %i[libgpg_error libgcrypt libksba],
-    recipe: MiniPortile.new('ntbtls', '0.1.2').tap {|r|
-      r.files << {
-        gpg:{
-          key: PUBKEY,
-          signature_url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2.sig",
-        },
-        url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2",
-      }
-      r.configure_options = %W[--enable-shared --disable-static --with-pic --disable-doc]
-    }
-  },
-  npth: {
-    name: 'nPth',
-    depends: %i[],
-    recipe: MiniPortile.new('npth', '1.6').tap {|r|
-      r.files << {
-        gpg:{
-          key: PUBKEY,
-          signature_url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2.sig",
-        },
-        url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2",
-      }
-      r.configure_options = %W[--enable-shared --disable-static --with-pic --disable-doc]
-    }
-  },
-}
+  $packages[id] = {
+    depends: depends,
+  }
 
-PACKAGES.each do |_, package|
-  recipe = package[:recipe]
-  recipe.target = '/opt'
-  def recipe.install
-    return if installed?
-    execute('install', %Q(#{make_cmd} install-strip),)
+  t = Rake::Task.define_task(:"init:#{id}" => depends.map {|depid| :"init:#{depid}"}) do
+    dep_recipes = depends.map {|id| $packages.fetch(id)[:recipe] }
+    recipe = MiniPortile.new(name, version)
+    block.yield(recipe, dep_recipes)
+    recipe.target = TARGET
+    def recipe.install
+      return if installed?
+      execute('install', %Q(#{make_cmd} install-strip),)
+    end
+
+    $packages[id][:recipe] = recipe
   end
+
+  Rake::Task[:init].enhance([t])
+end
+
+def_package('gnupg', '2.2.18', depends: %i[libgpg-error libksba libassuan libgcrypt ntbtls npth]) do |r, deps|
+  rpath = deps.map {|dep| "#{dep.path}/lib" }.join(?:)
+  ldflags = "-Wl,-rpath,#{rpath}"
+
+  r.files << {
+    gpg:{
+      key: PUBKEY,
+      signature_url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2.sig",
+    },
+    url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2",
+  }
+  r.configure_options = %W[--disable-nls --disable-gpgsm --disable-gpgtar --disable-wks-tools --disable-photo-viewers --disable-card-support --disable-doc --enable-rpath LDFLAGS=#{ldflags}]
+end
+
+def_package('libgpg-error', '1.36') do |r|
+  r.files << {
+    gpg:{
+      key: PUBKEY,
+      signature_url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2.sig",
+    },
+    url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2",
+  }
+  r.configure_options = %W[--disable-nls --enable-shared --disable-static --with-pic --disable-doc]
+end
+
+def_package('libgcrypt', '1.8.5', depends: %i[libgpg-error]) do |r|
+  r.files << {
+    gpg:{
+      key: PUBKEY,
+      signature_url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2.sig",
+    },
+    url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2",
+  }
+  r.configure_options = %W[--enable-shared --disable-static --with-pic --disable-doc]
+end
+
+def_package('libksba', '1.3.5', depends: %i[libgpg-error]) do |r|
+  r.files << {
+    gpg:{
+      key: PUBKEY,
+      signature_url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2.sig",
+    },
+    url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2",
+  }
+  r.configure_options = %W[--enable-shared --disable-static --with-pic --disable-doc]
+end
+
+def_package('libassuan', '2.5.3', depends: %i[libgpg-error]) do |r|
+  r.files << {
+    gpg:{
+      key: PUBKEY,
+      signature_url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2.sig",
+    },
+    url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2",
+  }
+  r.configure_options = %W[--enable-shared --disable-static --with-pic --disable-doc]
+end
+
+def_package('ntbtls', '0.1.2', depends: %i[libgpg-error libgcrypt libksba]) do |r|
+  r.files << {
+    gpg:{
+      key: PUBKEY,
+      signature_url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2.sig",
+    },
+    url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2",
+  }
+  r.configure_options = %W[--enable-shared --disable-static --with-pic --disable-doc]
+end
+
+def_package('npth', '1.6') do |r|
+  r.files << {
+    gpg:{
+      key: PUBKEY,
+      signature_url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2.sig",
+    },
+    url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2",
+  }
+  r.configure_options = %W[--enable-shared --disable-static --with-pic --disable-doc]
 end
 
 def recipe(id)
-  PACKAGES[id][:recipe]
+  $packages[id.to_sym][:recipe]
 end
 
-desc "Fetch source codes"
-task :fetch => PACKAGES.keys.map {|id| :"fetch:#{id}" }
+desc "Clean everything"
+task :clean => $packages.keys.map {|id| :"clean:#{id}" }
+
+namespace :clean do
+  $packages.each do |id, package|
+    desc "Clean #{id}"
+    task id => :init do
+      recipe = package[:recipe]
+      FileUtils.rm_rf(recipe.send(:tmp_path))
+    end
+  end
+end
+
+desc "Fetch everything"
+task :fetch => $packages.keys.map {|id| :"fetch:#{id}" }
 
 namespace :fetch do
-  PACKAGES.each do |id, package|
-    desc "Fetch source code of #{package[:name]}"
-    task id do
+  $packages.each do |id, package|
+    desc "Fetch #{id}"
+    task id => :init do
       recipe = package[:recipe]
       recipe.download unless recipe.downloaded?
     end
   end
 end
 
+desc 'Build everything'
+task :build => $packages.keys.map {|id| :"build:#{id}" }
+
 namespace :build do
-  PACKAGES.each do |id, package|
-    desc "Build #{package[:name]}"
-    task id => package[:depends] do
+  $packages.each do |id, package|
+    desc "Build #{id}"
+    task id => [:init, *package[:depends]] do
       recipe = package[:recipe]
       recipe.cook
       recipe.activate
@@ -149,19 +161,22 @@ namespace :build do
   end
 end
 
+task :symlink => :init do
+  bin_dir = TARGET.join('bin').tap(&:mkpath)
+
+  $packages.each do |_, pkg|
+    FileUtils.ln_sf(Pathname(pkg[:recipe].path).join('bin').children, bin_dir)
+  end
+end
+
 desc 'Create archive'
-task :package => :build do
+task :package => [:build, :symlink] do
   archive = (Pathname(__dir__) + 'pkg').tap(&:mkpath) + 'layer.zip'
   rm_f archive
 
-  ports_dir = Pathname(__dir__) + '/opt'
+  pkgs = $packages.map {|_, pkg| Pathname(pkg[:recipe].path).relative_path_from(TARGET).to_s }
 
-  exclude = %w[include/** share/aclocal/** share/common-lisp/** share/info/** lib/pkgconfig/** lib/*.la]
-
-  PACKAGES.each do |_, package|
-    recipe = package[:recipe]
-    Dir.chdir(ports_dir + recipe.host + recipe.name + recipe.version) do
-      sh 'zip', '-yr', archive.to_s, '.', *exclude.flat_map {|p| %W[-x #{p}] }
-    end
+  Dir.chdir(TARGET) do
+    sh 'zip', '-yr', archive.to_s, 'bin', *pkgs
   end
 end
