@@ -1,3 +1,11 @@
+GIT
+  remote: https://github.com/hanazuki/rake-portile.git
+  revision: e5e0e3b8ee740d1cae28129a3d7e0e4cc089a697
+  specs:
+    rake-portile (0.0.0)
+      mini_portile2
+      rake
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -8,8 +16,8 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  mini_portile2
   rake
+  rake-portile!
 
 BUNDLED WITH
-   2.1.0.pre.2
+   2.1.0.pre.3

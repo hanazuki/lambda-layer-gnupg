@@ -1,4 +1,4 @@
 source 'https://rubygems.org'
 
 gem 'rake'
-gem 'mini_portile2'
+gem 'rake-portile', github: 'hanazuki/rake-portile'
