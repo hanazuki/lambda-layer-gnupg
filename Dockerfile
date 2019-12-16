@@ -1,8 +1,9 @@
 FROM lambci/lambda:build-ruby2.5
 
 WORKDIR /tmp/src
-ADD docker/Gemfile docker/Gemfile.lock ./
+ADD Gemfile Gemfile.lock ./
 RUN bundle --deployment
-ADD docker/gnupg.asc docker/Rakefile ./
+ADD gnupg.asc Rakefile ./
 RUN bundle exec rake fetch
 RUN bundle exec rake build
+RUN bundle exec rake package
