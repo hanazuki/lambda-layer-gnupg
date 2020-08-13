@@ -1,4 +1,5 @@
 require 'bundler/setup'
+require 'json'
 require 'pathname'
 
 require 'rake/portile'
@@ -7,10 +8,11 @@ Rake::Portile.target = ENV.fetch('TARGET', '/opt')
 Rake::Portile.jobs = `nproc`.strip
 
 PUBKEY = (Pathname(__dir__) + 'gnupg.asc').read
+VERSIONS = JSON.load(Pathname(__dir__) + 'versions.json')
 
 task :default => :package
 
-def_port('gnupg', '2.2.18', depends: %i[libgpg-error libksba libassuan libgcrypt ntbtls npth]) do |r, deps|
+def_port('gnupg', VERSIONS.fetch('gnupg'), depends: %i[libgpg-error libksba libassuan libgcrypt ntbtls npth]) do |r, deps|
   rpath = deps.map {|dep| "#{dep.path}/lib" }.join(?:)
   ldflags = "-Wl,-rpath,#{rpath}"
 
@@ -24,7 +26,7 @@ def_port('gnupg', '2.2.18', depends: %i[libgpg-error libksba libassuan libgcrypt
   r.configure_options = %W[--disable-nls --disable-gpgsm --disable-gpgtar --disable-wks-tools --disable-photo-viewers --disable-card-support --disable-doc --enable-rpath LDFLAGS=#{ldflags}]
 end
 
-def_port('libgpg-error', '1.36') do |r|
+def_port('libgpg-error', VERSIONS.fetch('libgpg-error')) do |r|
   r.files << {
     gpg:{
       key: PUBKEY,
@@ -35,7 +37,7 @@ def_port('libgpg-error', '1.36') do |r|
   r.configure_options = %W[--disable-nls --enable-shared --disable-static --with-pic --disable-doc]
 end
 
-def_port('libgcrypt', '1.8.5', depends: %i[libgpg-error]) do |r|
+def_port('libgcrypt', VERSIONS.fetch('libgcrypt'), depends: %i[libgpg-error]) do |r|
   r.files << {
     gpg:{
       key: PUBKEY,
@@ -46,7 +48,7 @@ def_port('libgcrypt', '1.8.5', depends: %i[libgpg-error]) do |r|
   r.configure_options = %W[--enable-shared --disable-static --with-pic --disable-doc]
 end
 
-def_port('libksba', '1.3.5', depends: %i[libgpg-error]) do |r|
+def_port('libksba', VERSIONS.fetch('libksba'), depends: %i[libgpg-error]) do |r|
   r.files << {
     gpg:{
       key: PUBKEY,
@@ -57,7 +59,7 @@ def_port('libksba', '1.3.5', depends: %i[libgpg-error]) do |r|
   r.configure_options = %W[--enable-shared --disable-static --with-pic --disable-doc]
 end
 
-def_port('libassuan', '2.5.3', depends: %i[libgpg-error]) do |r|
+def_port('libassuan', VERSIONS.fetch('libassuan'), depends: %i[libgpg-error]) do |r|
   r.files << {
     gpg:{
       key: PUBKEY,
@@ -68,7 +70,7 @@ def_port('libassuan', '2.5.3', depends: %i[libgpg-error]) do |r|
   r.configure_options = %W[--enable-shared --disable-static --with-pic --disable-doc]
 end
 
-def_port('ntbtls', '0.1.2', depends: %i[libgpg-error libgcrypt libksba]) do |r|
+def_port('ntbtls', VERSIONS.fetch('ntbtls'), depends: %i[libgpg-error libgcrypt libksba]) do |r|
   r.files << {
     gpg:{
       key: PUBKEY,
@@ -79,7 +81,7 @@ def_port('ntbtls', '0.1.2', depends: %i[libgpg-error libgcrypt libksba]) do |r|
   r.configure_options = %W[--enable-shared --disable-static --with-pic --disable-doc]
 end
 
-def_port('npth', '1.6') do |r|
+def_port('npth', VERSIONS.fetch('npth')) do |r|
   r.files << {
     gpg:{
       key: PUBKEY,

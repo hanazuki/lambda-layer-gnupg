@@ -46,3 +46,58 @@ task :upload => :build do
 
   puts layers.map(&:layer_version_arn)
 end
+
+PACKAGES = {
+  'gnupg' => {
+    uri: 'https://gnupg.org/ftp/gcrypt/gnupg/',
+    pattern: /\Agnupg-([\d.]+)\.tar\.bz2\z/,
+  },
+  'libgpg-error' => {
+    uri: 'https://gnupg.org/ftp/gcrypt/libgpg-error/',
+    pattern: /\Alibgpg-error-([\d.]+)\.tar\.bz2\z/,
+  },
+  'libgcrypt' => {
+    uri: 'https://gnupg.org/ftp/gcrypt/libgcrypt/',
+    pattern: /\Alibgcrypt-([\d.]+)\.tar\.bz2\z/,
+  },
+  'libksba' => {
+    uri: 'https://gnupg.org/ftp/gcrypt/libksba/',
+    pattern: /\Alibksba-([\d.]+)\.tar\.bz2\z/,
+  },
+  'libassuan' => {
+    uri: 'https://gnupg.org/ftp/gcrypt/libassuan/',
+    pattern: /\Alibassuan-([\d.]+)\.tar\.bz2\z/,
+  },
+  'ntbtls' => {
+    uri: 'https://gnupg.org/ftp/gcrypt/ntbtls/',
+    pattern: /\Antbtls-([\d.]+)\.tar\.bz2\z/,
+  },
+  'npth' => {
+    uri: 'https://gnupg.org/ftp/gcrypt/npth/',
+    pattern: /\Anpth-([\d.]+)\.tar\.bz2\z/,
+  },
+}
+
+task :watch do
+  require 'json'
+  require 'nokogiri'
+  require 'open-uri'
+
+  def versioncmp(a, b)
+    Gem::Version.new(a) <=> Gem::Version.new(b)
+  end
+
+  latest_versions = PACKAGES.to_h do |name, opts|
+    re = opts[:pattern]
+    uri = URI(opts[:uri])
+    uri.open do |f|
+      html = Nokogiri::HTML(f)
+      links = html.css('a[href]').filter_map {|e| [$1, e] if re =~ e.attr('href') }
+      links.sort! {|a, b| -versioncmp(a[0], b[0]) }
+      p [name, links.map{|l| l[0] }]
+      [name, links[0][0]]
+    end
+  end
+
+  File.write('docker/versions.json', JSON.dump(latest_versions))
+end
