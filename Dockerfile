@@ -1,4 +1,5 @@
-FROM lambci/lambda:build-ruby2.5
+ARG base
+FROM lambci/lambda:build-${base}
 
 WORKDIR /tmp/src
 ADD Gemfile Gemfile.lock ./

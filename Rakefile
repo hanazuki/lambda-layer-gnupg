@@ -2,49 +2,68 @@ require 'bundler/setup'
 
 REGIONS = %w[ap-northeast-1]
 
-task :default => :upload
-task :build do
-  require 'pathname'
-  require 'tmpdir'
+BASES = {
+  'amazonlinux1' => 'ruby2.5',
+  'amazonlinux2' => 'ruby2.7',
+}
 
-  Dir.mktmpdir do |dir|
-    dir = Pathname(dir)
-    iidfile = dir + 'iid'
-    cidfile = dir + 'cid'
-
-    sh(*%W[docker build --iidfile #{iidfile} -f Dockerfile docker])
-    iid = iidfile.read
-
-    sh(*%W[docker create --cidfile #{cidfile} #{iid} /bin/true])
-    cid = cidfile.read
-
-    mkdir_p 'pkg'
-    sh(*%W[docker cp #{cid}:/tmp/src/pkg/layer.zip pkg/])
-  ensure
-    system(*%W[docker rm -f #{cid}]) if cid
-  end
+def build(base)
 end
 
-task :upload => :build do
-  require 'base64'
-  require 'aws-sdk-lambda'
+task :default => :upload
 
-  content = IO.binread('pkg/layer.zip')
+BASES.each_key do |base|
+  desc "Build layer images"
+  task :build => :"build:#{base}"
 
-  layers = REGIONS.map do |region|
-    client = Aws::Lambda::Client.new(region: region)
+  desc "Build layer image for #{base}"
+  task :"build:#{base}" do
+    require 'pathname'
+    require 'tmpdir'
 
-    client.publish_layer_version(
-      layer_name: 'gnupg',
-      description: 'GnuPG binaries',
-      license_info: 'GPL-3.0-or-later',
-      content: {
-        zip_file: content,
-      },
-    )
+    Dir.mktmpdir do |dir|
+      dir = Pathname(dir)
+      iidfile = dir + 'iid'
+      cidfile = dir + 'cid'
+
+      sh(*%W[docker build --iidfile #{iidfile} --file Dockerfile --build-arg base=#{BASES[base]} docker])
+      iid = iidfile.read
+
+      sh(*%W[docker create --cidfile #{cidfile} #{iid} /bin/true])
+      cid = cidfile.read
+
+      mkdir_p 'pkg'
+      sh(*%W[docker cp #{cid}:/tmp/src/pkg/layer.zip pkg/gnupg-#{base}.zip])
+    ensure
+      system(*%W[docker rm -f #{cid}]) if cid
+    end
   end
 
-  puts layers.map(&:layer_version_arn)
+  desc "Upload layer images"
+  task :upload => :"upload:#{base}"
+
+  desc "Upload layer image for #{base}"
+  task :"upload:#{base}" => :"build:#{base}" do
+    require 'base64'
+    require 'aws-sdk-lambda'
+
+    content = IO.binread("pkg/gnupg-#{base}.zip")
+
+    layers = REGIONS.map do |region|
+      client = Aws::Lambda::Client.new(region: region)
+
+      client.publish_layer_version(
+        layer_name: "gnupg-#{base}",
+        description: "GnuPG binaries for #{base}",
+        license_info: 'GPL-3.0-or-later',
+        content: {
+          zip_file: content,
+        },
+      )
+    end
+
+    puts layers.map(&:layer_version_arn)
+  end
 end
 
 PACKAGES = {
