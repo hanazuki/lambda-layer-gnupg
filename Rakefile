@@ -7,9 +7,6 @@ BASES = {
   'amazonlinux2' => 'ruby2.7',
 }
 
-def build(base)
-end
-
 task :default => :upload
 
 BASES.each_key do |base|
