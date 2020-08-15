@@ -7,6 +7,8 @@ BASES = {
   'amazonlinux2' => 'ruby2.7',
 }
 
+ENV['DOCKER_BUILDKIT'] = '1'
+
 task :default => :upload
 
 BASES.each_key do |base|
