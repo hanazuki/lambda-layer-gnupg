@@ -106,16 +106,19 @@ task :watch do
   end
 
   latest_versions = PACKAGES.to_h do |name, opts|
-    re = opts[:pattern]
-    uri = URI(opts[:uri])
-    uri.open do |f|
-      html = Nokogiri::HTML(f)
-      links = html.css('a[href]').filter_map {|e| [$1, e] if re =~ e.attr('href') }
-      links.sort! {|a, b| -versioncmp(a[0], b[0]) }
-      p [name, links.map{|l| l[0] }]
-      [name, links[0][0]]
-    end
-  end
+    [
+      name,
+      Thread.new do
+        re = opts[:pattern]
+        URI(opts[:uri]).open do |f|
+          html = Nokogiri::HTML(f)
+          versions = html.css('a[href]').filter_map {|e| $1 if re =~ e.attr('href') }.sort {|a, b| -versioncmp(a, b) }
+          p [name, versions]
+          versions.first
+        end
+      end
+    ]
+  end.transform_values(&:value)
 
   File.write('docker/versions.json', JSON.dump(latest_versions))
 end
