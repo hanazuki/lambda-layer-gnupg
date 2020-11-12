@@ -97,9 +97,10 @@ PACKAGES = {
 }
 
 task :watch do
-  require 'json'
+  require 'yaml'
   require 'nokogiri'
   require 'open-uri'
+  require 'digest/sha2'
 
   def versioncmp(a, b)
     Gem::Version.new(a) <=> Gem::Version.new(b)
@@ -110,15 +111,21 @@ task :watch do
       name,
       Thread.new do
         re = opts[:pattern]
-        URI(opts[:uri]).open do |f|
+        index_uri = URI(opts[:uri])
+        index_uri.open do |f|
           html = Nokogiri::HTML(f)
-          versions = html.css('a[href]').filter_map {|e| $1 if re =~ e.attr('href') }.sort {|a, b| -versioncmp(a, b) }
+          versions = html.css('a[href]').filter_map {|e|
+            href = e.attr('href')
+            {version: $1, uri: index_uri.merge(href).to_s} if re =~ href
+          }.sort {|a, b| -versioncmp(a[:version], b[:version]) }
           p [name, versions]
-          versions.first
+          latest = versions.first
+          latest[:sha256sum] = Digest::SHA256.hexdigest(URI(latest[:uri]).open('rb', &:read))
+          latest
         end
       end
     ]
   end.transform_values(&:value)
 
-  File.write('docker/versions.json', JSON.dump(latest_versions))
+  File.write('docker/versions.yaml', YAML.dump(latest_versions))
 end
