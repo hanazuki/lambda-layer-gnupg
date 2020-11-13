@@ -101,9 +101,37 @@ task :watch do
   require 'nokogiri'
   require 'open-uri'
   require 'digest/sha2'
+  require 'gpgme'
+  require 'tmpdir'
 
   def versioncmp(a, b)
     Gem::Version.new(a) <=> Gem::Version.new(b)
+  end
+
+  def verify(version:, uri:)
+    Dir.mktmpdir do |dir|
+      ENV['GNUPGHOME'] = dir
+
+      URI(uri).open('rb') do |archive|
+         URI(uri + '.sig').open('rb') do |signature|
+           GPGME::Ctx.new do |gpg|
+             File.open('gnupg.asc') do |f|
+               gpg.import_keys(GPGME::Data.from_io(f))
+             end
+
+             gpg.verify(GPGME::Data.from_io(signature), GPGME::Data.from_io(archive), nil)
+             raise "No valid signatures for #{uri}" unless gpg.verify_result.signatures.any?(&:valid?)
+           end
+           {
+             version: version,
+             url: uri,
+             sha256: Digest::SHA256.hexdigest(archive.tap(&:rewind).read)
+           }
+         end
+      end
+    ensure
+      ENV['GNUPGHOME'] = nil
+    end
   end
 
   latest_versions = PACKAGES.to_h do |name, opts|
@@ -118,14 +146,12 @@ task :watch do
             href = e.attr('href')
             {version: $1, uri: index_uri.merge(href).to_s} if re =~ href
           }.sort {|a, b| -versioncmp(a[:version], b[:version]) }
-          p [name, versions]
-          latest = versions.first
-          latest[:sha256sum] = Digest::SHA256.hexdigest(URI(latest[:uri]).open('rb', &:read))
-          latest
+          versions.first
         end
       end
     ]
-  end.transform_values(&:value)
+  end
 
+  latest_versions.transform_values! {|th| p verify(**th.value) }
   File.write('docker/versions.yaml', YAML.dump(latest_versions))
 end

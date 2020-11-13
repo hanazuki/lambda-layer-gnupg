@@ -1,94 +1,51 @@
 require 'bundler/setup'
-require 'json'
 require 'pathname'
+require 'yaml'
 
 require 'rake/portile'
 include Rake::Portile
 Rake::Portile.target = ENV.fetch('TARGET', '/opt')
 Rake::Portile.jobs = `nproc`.strip
 
-PUBKEY = (Pathname(__dir__) + 'gnupg.asc').read
-VERSIONS = JSON.load(Pathname(__dir__) + 'versions.json')
+VERSIONS = YAML.load_file(Pathname(__dir__) + 'versions.yaml')
 
 task :default => :package
 
-def_port('gnupg', VERSIONS.fetch('gnupg'), depends: %i[libgpg-error libksba libassuan libgcrypt ntbtls npth]) do |r, deps|
+def_port('gnupg', VERSIONS.dig('gnupg', :version), depends: %i[libgpg-error libksba libassuan libgcrypt ntbtls npth]) do |r, deps|
   rpath = deps.map {|dep| "#{dep.path}/lib" }.join(?:)
   ldflags = "-Wl,-rpath,#{rpath}"
 
-  r.files << {
-    gpg:{
-      key: PUBKEY,
-      signature_url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2.sig",
-    },
-    url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2",
-  }
+  r.files << VERSIONS.fetch(r.name).slice(:url, :sha256)
   r.configure_options = %W[--disable-nls --disable-gpgsm --disable-gpgtar --disable-wks-tools --disable-photo-viewers --disable-card-support --disable-doc --enable-rpath LDFLAGS=#{ldflags}]
 end
 
-def_port('libgpg-error', VERSIONS.fetch('libgpg-error')) do |r|
-  r.files << {
-    gpg:{
-      key: PUBKEY,
-      signature_url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2.sig",
-    },
-    url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2",
-  }
+def_port('libgpg-error', VERSIONS.dig('libgpg-error', :version)) do |r|
+  r.files << VERSIONS.fetch(r.name).slice(:url, :sha256)
   r.configure_options = %W[--disable-nls --enable-shared --disable-static --with-pic --disable-doc]
 end
 
-def_port('libgcrypt', VERSIONS.fetch('libgcrypt'), depends: %i[libgpg-error]) do |r|
-  r.files << {
-    gpg:{
-      key: PUBKEY,
-      signature_url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2.sig",
-    },
-    url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2",
-  }
+def_port('libgcrypt', VERSIONS.dig('libgcrypt', :version), depends: %i[libgpg-error]) do |r|
+  r.files << VERSIONS.fetch(r.name).slice(:url, :sha256)
   r.configure_options = %W[--enable-shared --disable-static --with-pic --disable-doc]
 end
 
-def_port('libksba', VERSIONS.fetch('libksba'), depends: %i[libgpg-error]) do |r|
-  r.files << {
-    gpg:{
-      key: PUBKEY,
-      signature_url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2.sig",
-    },
-    url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2",
-  }
+def_port('libksba', VERSIONS.dig('libksba', :version), depends: %i[libgpg-error]) do |r|
+  r.files << VERSIONS.fetch(r.name).slice(:url, :sha256)
   r.configure_options = %W[--enable-shared --disable-static --with-pic --disable-doc]
 end
 
-def_port('libassuan', VERSIONS.fetch('libassuan'), depends: %i[libgpg-error]) do |r|
-  r.files << {
-    gpg:{
-      key: PUBKEY,
-      signature_url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2.sig",
-    },
-    url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2",
-  }
+def_port('libassuan', VERSIONS.dig('libassuan', :version), depends: %i[libgpg-error]) do |r|
+  r.files << VERSIONS.fetch(r.name).slice(:url, :sha256)
   r.configure_options = %W[--enable-shared --disable-static --with-pic --disable-doc]
 end
 
-def_port('ntbtls', VERSIONS.fetch('ntbtls'), depends: %i[libgpg-error libgcrypt libksba]) do |r|
-  r.files << {
-    gpg:{
-      key: PUBKEY,
-      signature_url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2.sig",
-    },
-    url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2",
-  }
+def_port('ntbtls', VERSIONS.dig('ntbtls', :version), depends: %i[libgpg-error libgcrypt libksba]) do |r|
+  r.files << VERSIONS.fetch(r.name).slice(:url, :sha256)
   r.configure_options = %W[--enable-shared --disable-static --with-pic --disable-doc]
 end
 
-def_port('npth', VERSIONS.fetch('npth')) do |r|
-  r.files << {
-    gpg:{
-      key: PUBKEY,
-      signature_url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2.sig",
-    },
-    url: "https://gnupg.org/ftp/gcrypt/#{r.name}/#{r.name}-#{r.version}.tar.bz2",
-  }
+def_port('npth', VERSIONS.dig('npth', :version)) do |r|
+  r.files << VERSIONS.fetch(r.name).slice(:url, :sha256)
   r.configure_options = %W[--enable-shared --disable-static --with-pic --disable-doc]
 end
 
