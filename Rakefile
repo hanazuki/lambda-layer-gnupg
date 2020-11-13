@@ -25,7 +25,7 @@ BASES.each_key do |base|
       iidfile = dir + 'iid'
       cidfile = dir + 'cid'
 
-      sh(*%W[docker build --iidfile #{iidfile} --file Dockerfile --build-arg base=#{BASES[base]} docker])
+      sh(*%W[docker build --iidfile #{iidfile} --file Dockerfile.build --build-arg base=#{BASES[base]} docker])
       iid = iidfile.read
 
       sh(*%W[docker create --cidfile #{cidfile} #{iid} /bin/true])
@@ -35,6 +35,27 @@ BASES.each_key do |base|
       sh(*%W[docker cp #{cid}:/tmp/src/pkg/layer.zip pkg/gnupg-#{base}.zip])
     ensure
       system(*%W[docker rm -f #{cid}]) if cid
+    end
+  end
+
+  desc "Test layer images"
+  task :test => :"test:#{base}"
+
+  desc "Test layer image for #{base}"
+  task :"test:#{base}" => :"build:#{base}" do
+    require 'pathname'
+    require 'tmpdir'
+
+    Dir.mktmpdir do |dir|
+      dir = Pathname(dir)
+      iidfile = dir + 'iid'
+
+      sh(*%W[docker build --iidfile #{iidfile} --file Dockerfile.test --build-arg base=#{BASES[base]} --build-arg pkg=gnupg-#{base}.zip pkg])
+      iid = iidfile.read
+
+      sh(*%[docker run --rm #{iid} /opt/bin/gpg --version])
+    ensure
+      system(*%W[docker rmi -f #{iid}]) if iid
     end
   end
 

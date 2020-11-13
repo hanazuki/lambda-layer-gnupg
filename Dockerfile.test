@@ -1,0 +1,10 @@
+# syntax=docker/dockerfile:experimental
+
+ARG base
+FROM amazon/aws-sam-cli-build-image-${base} AS extract
+ARG pkg
+COPY ${pkg} /tmp
+RUN unzip /tmp/${pkg} -d /tmp/pkg
+
+FROM amazon/aws-sam-cli-emulation-image-${base}
+COPY --from=extract /tmp/pkg/ /opt/

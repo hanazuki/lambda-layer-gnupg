@@ -36,4 +36,4 @@ jobs:
         bundle install --jobs 4 --retry 3
     - name: Build
       run: |
-        bundle exec rake build:${{ matrix.base }}
+        bundle exec rake test:${{ matrix.base }}
