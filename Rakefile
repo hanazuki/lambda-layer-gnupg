@@ -97,12 +97,41 @@ PACKAGES = {
 }
 
 task :watch do
-  require 'json'
+  require 'yaml'
   require 'nokogiri'
   require 'open-uri'
+  require 'digest/sha2'
+  require 'gpgme'
+  require 'tmpdir'
 
   def versioncmp(a, b)
     Gem::Version.new(a) <=> Gem::Version.new(b)
+  end
+
+  def verify(version:, uri:)
+    Dir.mktmpdir do |dir|
+      ENV['GNUPGHOME'] = dir
+
+      URI(uri).open('rb') do |archive|
+         URI(uri + '.sig').open('rb') do |signature|
+           GPGME::Ctx.new do |gpg|
+             File.open('gnupg.asc') do |f|
+               gpg.import_keys(GPGME::Data.from_io(f))
+             end
+
+             gpg.verify(GPGME::Data.from_io(signature), GPGME::Data.from_io(archive), nil)
+             raise "No valid signatures for #{uri}" unless gpg.verify_result.signatures.any?(&:valid?)
+           end
+           {
+             version: version,
+             url: uri,
+             sha256: Digest::SHA256.hexdigest(archive.tap(&:rewind).read)
+           }
+         end
+      end
+    ensure
+      ENV['GNUPGHOME'] = nil
+    end
   end
 
   latest_versions = PACKAGES.to_h do |name, opts|
@@ -110,15 +139,19 @@ task :watch do
       name,
       Thread.new do
         re = opts[:pattern]
-        URI(opts[:uri]).open do |f|
+        index_uri = URI(opts[:uri])
+        index_uri.open do |f|
           html = Nokogiri::HTML(f)
-          versions = html.css('a[href]').filter_map {|e| $1 if re =~ e.attr('href') }.sort {|a, b| -versioncmp(a, b) }
-          p [name, versions]
+          versions = html.css('a[href]').filter_map {|e|
+            href = e.attr('href')
+            {version: $1, uri: index_uri.merge(href).to_s} if re =~ href
+          }.sort {|a, b| -versioncmp(a[:version], b[:version]) }
           versions.first
         end
       end
     ]
-  end.transform_values(&:value)
+  end
 
-  File.write('docker/versions.json', JSON.dump(latest_versions))
+  latest_versions.transform_values! {|th| p verify(**th.value) }
+  File.write('docker/versions.yaml', YAML.dump(latest_versions))
 end
