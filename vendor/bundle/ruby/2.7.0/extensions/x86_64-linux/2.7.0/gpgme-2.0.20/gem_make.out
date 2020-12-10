@@ -1,0 +1,123 @@
+current directory: /home/runner/work/lambda-layer-gnupg/lambda-layer-gnupg/vendor/bundle/ruby/2.7.0/gems/gpgme-2.0.20/ext/gpgme
+/opt/hostedtoolcache/Ruby/2.7.2/x64/bin/ruby -I /opt/hostedtoolcache/Ruby/2.7.2/x64/lib/ruby/2.7.0 -r ./siteconf20201210-1783-68ekgv.rb extconf.rb
+************************************************************************
+IMPORTANT!  gpgme gem uses locally built versions of required C libraries,
+namely libgpg-error, libassuan, and gpgme.
+
+If this is a concern for you and you want to use the system library
+instead, abort this installation process and reinstall gpgme gem as
+follows:
+
+    gem install gpgme -- --use-system-libraries
+
+************************************************************************
+Extracting libgpg-error-1.37.tar.bz2 into tmp/x86_64-linux-gnu/ports/libgpg-error/1.37... OK
+Running 'configure' for libgpg-error 1.37... OK
+Running 'compile' for libgpg-error 1.37... OK
+Running 'install' for libgpg-error 1.37... OK
+Activating libgpg-error 1.37 (from /home/runner/work/lambda-layer-gnupg/lambda-layer-gnupg/vendor/bundle/ruby/2.7.0/gems/gpgme-2.0.20/ports/x86_64-linux-gnu/libgpg-error/1.37)...
+Extracting libassuan-2.5.3.tar.bz2 into tmp/x86_64-linux-gnu/ports/libassuan/2.5.3... OK
+Running 'configure' for libassuan 2.5.3... OK
+Running 'compile' for libassuan 2.5.3... OK
+Running 'install' for libassuan 2.5.3... OK
+Activating libassuan 2.5.3 (from /home/runner/work/lambda-layer-gnupg/lambda-layer-gnupg/vendor/bundle/ruby/2.7.0/gems/gpgme-2.0.20/ports/x86_64-linux-gnu/libassuan/2.5.3)...
+Extracting gpgme-1.13.1.tar.bz2 into tmp/x86_64-linux-gnu/ports/gpgme/1.13.1... OK
+Running 'configure' for gpgme 1.13.1... OK
+Running 'compile' for gpgme 1.13.1... OK
+Running 'install' for gpgme 1.13.1... OK
+Activating gpgme 1.13.1 (from /home/runner/work/lambda-layer-gnupg/lambda-layer-gnupg/vendor/bundle/ruby/2.7.0/gems/gpgme-2.0.20/ports/x86_64-linux-gnu/gpgme/1.13.1)...
+checking for linker flags for static linking... -Wl,-Bstatic
+checking for gpgme.h... yes
+checking for gpgme >= 1.1.3... yes
+checking for gpgme_op_export_keys()... yes
+creating Makefile
+
+current directory: /home/runner/work/lambda-layer-gnupg/lambda-layer-gnupg/vendor/bundle/ruby/2.7.0/gems/gpgme-2.0.20/ext/gpgme
+make "DESTDIR=" clean
+
+current directory: /home/runner/work/lambda-layer-gnupg/lambda-layer-gnupg/vendor/bundle/ruby/2.7.0/gems/gpgme-2.0.20/ext/gpgme
+make "DESTDIR="
+compiling gpgme_n.c
+gpgme_n.c: In function ‘rb_s_gpgme_data_new_from_mem’:
+gpgme_n.c:302:28: warning: comparison of integer expressions of different signedness: ‘long int’ and ‘size_t’ {aka ‘long unsigned int’} [-Wsign-compare]
+  302 |   if (RSTRING_LEN(vbuffer) < size)
+      |                            ^
+gpgme_n.c: In function ‘rb_s_gpgme_op_keylist_start’:
+gpgme_n.c:875:34: warning: suggest braces around empty body in an ‘if’ statement [-Wempty-body]
+  875 |     SET_KEYLIST_IN_PROGRESS(vctx);
+      |                                  ^
+gpgme_n.c: In function ‘rb_s_gpgme_op_keylist_ext_start’:
+gpgme_n.c:904:34: warning: suggest braces around empty body in an ‘if’ statement [-Wempty-body]
+  904 |     SET_KEYLIST_IN_PROGRESS(vctx);
+      |                                  ^
+gpgme_n.c: In function ‘rb_s_gpgme_op_edit’:
+gpgme_n.c:1468:3: warning: ‘gpgme_op_edit’ is deprecated [-Wdeprecated-declarations]
+ 1468 |   err = gpgme_op_edit (ctx, key, edit_cb, (void *)vcb, out);
+      |   ^~~
+In file included from gpgme_n.c:43:
+/home/runner/work/lambda-layer-gnupg/lambda-layer-gnupg/vendor/bundle/ruby/2.7.0/gems/gpgme-2.0.20/ports/x86_64-linux-gnu/gpgme/1.13.1/include/gpgme.h:2600:15: note: declared here
+ 2600 | gpgme_error_t gpgme_op_edit       (gpgme_ctx_t ctx, gpgme_key_t key,
+      |               ^~~~~~~~~~~~~
+gpgme_n.c: In function ‘rb_s_gpgme_op_edit_start’:
+gpgme_n.c:1497:3: warning: ‘gpgme_op_edit_start’ is deprecated [-Wdeprecated-declarations]
+ 1497 |   err = gpgme_op_edit_start (ctx, key, edit_cb, (void *)vcb, out);
+      |   ^~~
+In file included from gpgme_n.c:43:
+/home/runner/work/lambda-layer-gnupg/lambda-layer-gnupg/vendor/bundle/ruby/2.7.0/gems/gpgme-2.0.20/ports/x86_64-linux-gnu/gpgme/1.13.1/include/gpgme.h:2597:15: note: declared here
+ 2597 | gpgme_error_t gpgme_op_edit_start (gpgme_ctx_t ctx, gpgme_key_t key,
+      |               ^~~~~~~~~~~~~~~~~~~
+gpgme_n.c: In function ‘rb_s_gpgme_op_card_edit’:
+gpgme_n.c:1526:3: warning: ‘gpgme_op_card_edit’ is deprecated [-Wdeprecated-declarations]
+ 1526 |   err = gpgme_op_card_edit (ctx, key, edit_cb, (void *)vcb, out);
+      |   ^~~
+In file included from gpgme_n.c:43:
+/home/runner/work/lambda-layer-gnupg/lambda-layer-gnupg/vendor/bundle/ruby/2.7.0/gems/gpgme-2.0.20/ports/x86_64-linux-gnu/gpgme/1.13.1/include/gpgme.h:2607:15: note: declared here
+ 2607 | gpgme_error_t gpgme_op_card_edit       (gpgme_ctx_t ctx, gpgme_key_t key,
+      |               ^~~~~~~~~~~~~~~~~~
+gpgme_n.c: In function ‘rb_s_gpgme_op_card_edit_start’:
+gpgme_n.c:1555:3: warning: ‘gpgme_op_card_edit_start’ is deprecated [-Wdeprecated-declarations]
+ 1555 |   err = gpgme_op_card_edit_start (ctx, key, edit_cb, (void *)vcb, out);
+      |   ^~~
+In file included from gpgme_n.c:43:
+/home/runner/work/lambda-layer-gnupg/lambda-layer-gnupg/vendor/bundle/ruby/2.7.0/gems/gpgme-2.0.20/ports/x86_64-linux-gnu/gpgme/1.13.1/include/gpgme.h:2603:15: note: declared here
+ 2603 | gpgme_error_t gpgme_op_card_edit_start (gpgme_ctx_t ctx, gpgme_key_t key,
+      |               ^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /opt/hostedtoolcache/Ruby/2.7.2/x64/include/ruby-2.7.0/ruby.h:33,
+                 from gpgme_n.c:39:
+gpgme_n.c: In function ‘Init_gpgme_n’:
+/opt/hostedtoolcache/Ruby/2.7.2/x64/include/ruby-2.7.0/ruby/ruby.h:2825:135: warning: passing argument 3 of ‘rb_define_module_function4’ from incompatible pointer type [-Wincompatible-pointer-types]
+ 2825 | #define rb_define_module_function(klass, mid, func, arity) rb_define_module_function_choose_prototypem3((arity),(func))((klass),(mid),(func),(arity));
+      |                                                                                                                                       ^~~~~~
+      |                                                                                                                                       |
+      |                                                                                                                                       VALUE (*)(VALUE,  VALUE,  VALUE,  VALUE) {aka long unsigned int (*)(long unsigned int,  long unsigned int,  long unsigned int,  long unsigned int)}
+gpgme_n.c:2422:3: note: in expansion of macro ‘rb_define_module_function’
+ 2422 |   rb_define_module_function (mGPGME, "gpgme_op_keylist_ext_start",
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /opt/hostedtoolcache/Ruby/2.7.2/x64/include/ruby-2.7.0/ruby/ruby.h:2148,
+                 from /opt/hostedtoolcache/Ruby/2.7.2/x64/include/ruby-2.7.0/ruby.h:33,
+                 from gpgme_n.c:39:
+/opt/hostedtoolcache/Ruby/2.7.2/x64/include/ruby-2.7.0/ruby/ruby.h:2802:27: note: expected ‘VALUE (*)(VALUE,  VALUE,  VALUE,  VALUE,  VALUE)’ {aka ‘long unsigned int (*)(long unsigned int,  long unsigned int,  long unsigned int,  long unsigned int,  long unsigned int)’} but argument is of type ‘VALUE (*)(VALUE,  VALUE,  VALUE,  VALUE)’ {aka ‘long unsigned int (*)(long unsigned int,  long unsigned int,  long unsigned int,  long unsigned int)’}
+ 2802 | RB_METHOD_DEFINITION_DECL(rb_define_module_function, (2,3), (VALUE klass, const char *name), (klass, name))
+      |                           ^~~~~~~~~~~~~~~~~~~~~~~~~
+/opt/hostedtoolcache/Ruby/2.7.2/x64/include/ruby-2.7.0/ruby/intern.h:1042:82: note: in definition of macro ‘RB_METHOD_DEFINITION_DECL_C’
+ 1042 |     __attribute__((__unused__,__weakref__(#def),__nonnull__ nonnull))static void defname(RB_UNWRAP_MACRO decl,VALUE(*func)funcargs,int arity);
+      |                                                                                  ^~~~~~~
+/opt/hostedtoolcache/Ruby/2.7.2/x64/include/ruby-2.7.0/ruby/intern.h:1078:1: note: in expansion of macro ‘RB_METHOD_DEFINITION_DECL_1’
+ 1078 | RB_METHOD_DEFINITION_DECL_1(def,nonnull,def##4 ,4 ,decl,vars,(VALUE,VALUE,VALUE,VALUE,VALUE)) \
+      | ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+/opt/hostedtoolcache/Ruby/2.7.2/x64/include/ruby-2.7.0/ruby/ruby.h:2802:1: note: in expansion of macro ‘RB_METHOD_DEFINITION_DECL’
+ 2802 | RB_METHOD_DEFINITION_DECL(rb_define_module_function, (2,3), (VALUE klass, const char *name), (klass, name))
+      | ^~~~~~~~~~~~~~~~~~~~~~~~~
+gpgme_n.c: At top level:
+cc1: warning: unrecognized command line option ‘-Wno-self-assign’
+cc1: warning: unrecognized command line option ‘-Wno-parentheses-equality’
+cc1: warning: unrecognized command line option ‘-Wno-constant-logical-operand’
+linking shared-object gpgme_n.so
+Cleaning files only used during build.
+rm -rf /home/runner/work/lambda-layer-gnupg/lambda-layer-gnupg/vendor/bundle/ruby/2.7.0/gems/gpgme-2.0.20/ext/gpgme/tmp/x86_64-linux-gnu/ports
+rmdir -p /home/runner/work/lambda-layer-gnupg/lambda-layer-gnupg/vendor/bundle/ruby/2.7.0/gems/gpgme-2.0.20/ext/gpgme/tmp/x86_64-linux-gnu
+rm -rf /home/runner/work/lambda-layer-gnupg/lambda-layer-gnupg/vendor/bundle/ruby/2.7.0/gems/gpgme-2.0.20/ports
+
+current directory: /home/runner/work/lambda-layer-gnupg/lambda-layer-gnupg/vendor/bundle/ruby/2.7.0/gems/gpgme-2.0.20/ext/gpgme
+make "DESTDIR=" install
+/usr/bin/install -c -m 0755 gpgme_n.so ./.gem.20201210-1783-112e2l2
