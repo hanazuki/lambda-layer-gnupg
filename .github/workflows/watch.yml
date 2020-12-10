@@ -5,7 +5,7 @@ on:
     - cron: '0 */1 * * *'
 
 jobs:
-  build:
+  watch:
     runs-on: ubuntu-20.04
 
     steps:
@@ -34,5 +34,6 @@ jobs:
     - name: Create pull request
       uses: peter-evans/create-pull-request@v3
       with:
+        base: master
         title: ${{ steps.watch.outputs.changes }}
         commit-message: Update ${{ steps.watch.outputs.changes }}
