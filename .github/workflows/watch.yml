@@ -1,0 +1,38 @@
+name: Watch
+
+on:
+  schedule:
+    - cron: '*/1 0 * * *'
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Ruby
+      uses: actions/setup-ruby@v1
+      with:
+        ruby-version: 2.7.x
+    - uses: actions/cache@v1
+      with:
+        path: vendor/bundle
+        key: ${{ runner.os }}-gem-${{ hashFiles('**/Gemfile.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-gem-
+    - name: Install
+      run: |
+        gem install --no-document bundler
+        bundle config set deployment true
+        bundle config set path vendor/bundle
+        bundle config set without development:test
+        bundle install --jobs 4 --retry 3
+    - name: Watch
+      id: watch
+      run: |
+        bundle exec rake watch
+    - name: Create pull request
+      uses: peter-evans/create-pull-request@v3
+      with:
+        title: ${{ steps.watch.outputs.changes }}
+        commit-message: Update ${{ steps.watch.outputs.changes }}

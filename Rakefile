@@ -129,23 +129,25 @@ task :watch do
     Gem::Version.new(a) <=> Gem::Version.new(b)
   end
 
-  def verify(version:, uri:)
+  def verify(version:, url:)
+    $stderr.puts "Download and verify #{url}"
+
     Dir.mktmpdir do |dir|
       ENV['GNUPGHOME'] = dir
 
-      URI(uri).open('rb') do |archive|
-         URI(uri + '.sig').open('rb') do |signature|
+      URI(url).open('rb') do |archive|
+         URI(url + '.sig').open('rb') do |signature|
            GPGME::Ctx.new do |gpg|
              File.open('gnupg.asc') do |f|
                gpg.import_keys(GPGME::Data.from_io(f))
              end
 
              gpg.verify(GPGME::Data.from_io(signature), GPGME::Data.from_io(archive), nil)
-             raise "No valid signatures for #{uri}" unless gpg.verify_result.signatures.any?(&:valid?)
+             raise "No valid signatures for #{url}" unless gpg.verify_result.signatures.any?(&:valid?)
            end
            {
              version: version,
-             url: uri,
+             url: url,
              sha256: Digest::SHA256.hexdigest(archive.tap(&:rewind).read)
            }
          end
@@ -154,6 +156,12 @@ task :watch do
       ENV['GNUPGHOME'] = nil
     end
   end
+
+  current_versions = begin
+                       YAML.load_file('docker/versions.yaml')
+                     rescue Errno::ENOENT
+                       {}
+                     end
 
   latest_versions = PACKAGES.to_h do |name, opts|
     [
@@ -165,7 +173,7 @@ task :watch do
           html = Nokogiri::HTML(f)
           versions = html.css('a[href]').filter_map {|e|
             href = e.attr('href')
-            {version: $1, uri: index_uri.merge(href).to_s} if re =~ href
+            {version: $1, url: index_uri.merge(href).to_s} if re =~ href
           }.sort {|a, b| -versioncmp(a[:version], b[:version]) }
           versions.first
         end
@@ -173,6 +181,21 @@ task :watch do
     ]
   end
 
-  latest_versions.transform_values! {|th| p verify(**th.value) }
+  changes = []
+
+  latest_versions = latest_versions.to_h do |name, th|
+    spec = th.value
+
+    if current_versions[name]&.slice(:version, :url) == spec
+      [name, current_versions[name]]
+    else
+      changes << "#{name}=#{spec[:version]}"
+      [name, verify(**spec)]
+    end
+  end
   File.write('docker/versions.yaml', YAML.dump(latest_versions))
+
+  unless changes.empty?
+    puts "::set-output name=changes::#{changes.join(', ')}"
+  end
 end
