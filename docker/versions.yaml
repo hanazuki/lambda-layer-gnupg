@@ -1,8 +1,8 @@
 ---
 gnupg:
-  :version: 2.2.23
-  :url: https://gnupg.org/ftp/gcrypt/gnupg/gnupg-2.2.23.tar.bz2
-  :sha256: 10b55e49d78b3e49f1edb58d7541ecbdad92ddaeeb885b6f486ed23d1cd1da5c
+  :version: 2.2.25
+  :url: https://gnupg.org/ftp/gcrypt/gnupg/gnupg-2.2.25.tar.bz2
+  :sha256: c55307b247af4b6f44d2916a25ffd1fb64ce2e509c3c3d028dbe7fbf309dc30a
 libgpg-error:
   :version: '1.39'
   :url: https://gnupg.org/ftp/gcrypt/libgpg-error/libgpg-error-1.39.tar.bz2
@@ -12,9 +12,9 @@ libgcrypt:
   :url: https://gnupg.org/ftp/gcrypt/libgcrypt/libgcrypt-1.8.7.tar.bz2
   :sha256: 03b70f028299561b7034b8966d7dd77ef16ed139c43440925fe8782561974748
 libksba:
-  :version: 1.4.0
-  :url: https://gnupg.org/ftp/gcrypt/libksba/libksba-1.4.0.tar.bz2
-  :sha256: bfe6a8e91ff0f54d8a329514db406667000cb207238eded49b599761bfca41b6
+  :version: 1.5.0
+  :url: https://gnupg.org/ftp/gcrypt/libksba/libksba-1.5.0.tar.bz2
+  :sha256: ae4af129216b2d7fdea0b5bf2a788cd458a79c983bb09a43f4d525cc87aba0ba
 libassuan:
   :version: 2.5.4
   :url: https://gnupg.org/ftp/gcrypt/libassuan/libassuan-2.5.4.tar.bz2
