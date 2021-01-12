@@ -16,9 +16,11 @@ GEM
     gpgme (2.0.20)
       mini_portile2 (~> 2.3)
     jmespath (1.4.0)
-    mini_portile2 (2.4.0)
-    nokogiri (1.10.10)
-      mini_portile2 (~> 2.4.0)
+    mini_portile2 (2.5.0)
+    nokogiri (1.11.0)
+      mini_portile2 (~> 2.5.0)
+      racc (~> 1.4)
+    racc (1.5.2)
     rake (13.0.1)
 
 PLATFORMS
