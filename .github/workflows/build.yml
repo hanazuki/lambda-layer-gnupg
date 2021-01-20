@@ -14,6 +14,7 @@ jobs:
         base:
           - amazonlinux1
           - amazonlinux2
+      fail-fast: false
 
     steps:
     - uses: actions/checkout@v1
